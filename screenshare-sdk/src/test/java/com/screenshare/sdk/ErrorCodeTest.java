@@ -1,5 +1,6 @@
 package com.screenshare.sdk;
 
+import com.screenshare.sdk.Common.ErrorCode;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
