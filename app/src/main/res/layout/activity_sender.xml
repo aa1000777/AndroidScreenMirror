@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 发送端界面布局 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".SenderActivity">
+
+    <!-- 标题栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_media_play"
+            android:tint="@color/purple_700" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/sender_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/black" />
+    </LinearLayout>
+
+    <!-- 连接方式选择 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/select_connection"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/rg_connection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/rb_wifi_p2p"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wifi_p2p"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/rb_lan_tcp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/lan_tcp" />
+
+        <RadioButton
+            android:id="@+id/rb_lan_udp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/lan_udp" />
+    </RadioGroup>
+
+    <!-- 状态显示 -->
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/connection_status"
+        android:textSize="14sp"
+        android:padding="12dp"
+        android:background="@color/teal_200"
+        android:layout_marginBottom="24dp"
+        android:gravity="center" />
+
+    <!-- 控制按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="32dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_start"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="@string/start_capture"
+            android:textSize="16sp"
+            app:backgroundTint="@color/green"
+            app:cornerRadius="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_stop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="@string/stop_capture"
+            android:textSize="16sp"
+            app:backgroundTint="@color/red"
+            app:cornerRadius="8dp"
+            android:enabled="false" />
+    </LinearLayout>
+
+    <!-- 连接设备列表 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="可用设备："
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <ListView
+        android:id="@+id/lv_devices"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@android:color/transparent" />
+
+    <!-- 底部按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_back"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="返回主菜单"
+        android:textSize="16sp"
+        app:cornerRadius="8dp" />
+
+</LinearLayout>

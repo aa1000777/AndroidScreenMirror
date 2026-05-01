@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 应用图标前景 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- 屏幕图标 -->
+    <path
+        android:fillColor="@color/white"
+        android:pathData="M20,20 L88,20 L88,68 L20,68 Z"/>
+    
+    <!-- 播放按钮 -->
+    <path
+        android:fillColor="@color/purple_700"
+        android:pathData="M44,38 L44,50 L56,44 Z"/>
+    
+    <!-- 箭头 -->
+    <path
+        android:fillColor="@color/teal_200"
+        android:pathData="M20,76 L88,76 L54,92 Z"/>
+</vector>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 字符串资源文件 -->
+<resources>
+    <string name="app_name">屏幕镜像</string>
+    
+    <!-- 主界面 -->
+    <string name="main_title">屏幕镜像</string>
+    <string name="main_subtitle">选择设备角色</string>
+    <string name="sender_button">作为发送端（手机）</string>
+    <string name="receiver_button">作为接收端（Pad）</string>
+    
+    <!-- 发送端界面 -->
+    <string name="sender_title">发送端 - 屏幕录制</string>
+    <string name="start_capture">开始投屏</string>
+    <string name="stop_capture">停止投屏</string>
+    <string name="connection_status">连接状态：未连接</string>
+    <string name="select_connection">选择连接方式</string>
+    <string name="wifi_p2p">WiFi P2P直连</string>
+    <string name="lan_tcp">局域网TCP</string>
+    <string name="lan_udp">局域网UDP</string>
+    
+    <!-- 接收端界面 -->
+    <string name="receiver_title">接收端 - 屏幕显示</string>
+    <string name="start_receive">开始接收</string>
+    <string name="stop_receive">停止接收</string>
+    <string name="search_device">搜索设备</string>
+    <string name="connect">连接</string>
+    <string name="disconnect">断开连接</string>
+    
+    <!-- 状态消息 -->
+    <string name="capture_started">屏幕录制已开始</string>
+    <string name="capture_stopped">屏幕录制已停止</string>
+    <string name="connected">已连接</string>
+    <string name="disconnected">已断开</string>
+    <string name="searching">正在搜索设备…</string>
+    <string name="no_devices">未找到设备</string>
+    
+    <!-- 错误消息 -->
+    <string name="error_permission">权限不足</string>
+    <string name="error_capture">屏幕录制失败</string>
+    <string name="error_connection">连接失败</string>
+    <string name="error_decode">解码失败</string>
+</resources>

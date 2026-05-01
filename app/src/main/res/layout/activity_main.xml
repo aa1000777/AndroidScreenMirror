@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主界面布局：选择发送端或接收端 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    tools:context=".MainActivity">
+
+    <!-- 应用标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/main_title"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="@color/purple_700"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 副标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/main_subtitle"
+        android:textSize="18sp"
+        android:textColor="@color/gray"
+        android:layout_marginBottom="48dp" />
+
+    <!-- 发送端按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_sender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:text="@string/sender_button"
+        android:textSize="18sp"
+        android:padding="16dp"
+        app:icon="@android:drawable/ic_media_play"
+        app:iconGravity="start"
+        app:iconPadding="16dp"
+        app:cornerRadius="12dp" />
+
+    <!-- 接收端按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_receiver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/receiver_button"
+        android:textSize="18sp"
+        android:padding="16dp"
+        app:icon="@android:drawable/ic_menu_view"
+        app:iconGravity="start"
+        app:iconPadding="16dp"
+        app:cornerRadius="12dp" />
+
+    <!-- 说明文本 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="请根据设备角色选择：\n• 发送端：手机，用于录制屏幕并发送\n• 接收端：Pad，用于接收并显示屏幕"
+        android:textSize="14sp"
+        android:textColor="@color/gray"
+        android:lineSpacingExtra="4dp" />
+
+</LinearLayout>
