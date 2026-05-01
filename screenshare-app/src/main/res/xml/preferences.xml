@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="视频设置">
+        <ListPreference
+            android:key="resolution"
+            android:title="分辨率"
+            android:defaultValue="1920x1080"
+            android:entries="@array/resolution_entries"
+            android:entryValues="@array/resolution_values" />
+        <ListPreference
+            android:key="fps"
+            android:title="帧率"
+            android:defaultValue="60"
+            android:entries="@array/fps_entries"
+            android:entryValues="@array/fps_values" />
+        <ListPreference
+            android:key="bitrate"
+            android:title="码率"
+            android:defaultValue="8000000"
+            android:entries="@array/bitrate_entries"
+            android:entryValues="@array/bitrate_values" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="网络设置">
+        <ListPreference
+            android:key="codec"
+            android:title="编码器"
+            android:defaultValue="h264"
+            android:entries="@array/codec_entries"
+            android:entryValues="@array/codec_values" />
+        <EditTextPreference
+            android:key="video_port"
+            android:title="视频端口"
+            android:defaultValue="8888" />
+        <EditTextPreference
+            android:key="touch_port"
+            android:title="触摸端口"
+            android:defaultValue="8889" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="关于">
+        <Preference
+            android:key="version"
+            android:title="版本"
+            android:summary="1.0.0" />
+    </PreferenceCategory>
+</PreferenceScreen>

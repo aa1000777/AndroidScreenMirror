@@ -7,6 +7,7 @@ import android.graphics.Path;
 import android.os.Build;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 
 import com.screenshare.sdk.Common.ErrorCode;
@@ -79,14 +80,6 @@ public class TouchInjectorService extends AccessibilityService {
 
     /**
      * 注入触摸事件
-     *
-     * @param timestamp 事件时间戳
-     * @param action MotionEvent.ACTION_*
-     * @param x 触摸 X 坐标（相对于原视频）
-     * @param y 触摸 Y 坐标（相对于原视频）
-     * @param scaleX X 方向缩放比例
-     * @param scaleY Y 方向缩放比例
-     * @return 是否注入成功
      */
     public boolean injectTouchEvent(long timestamp, int action, float x, float y, float scaleX, float scaleY) {
         if (instance == null) {
@@ -133,31 +126,29 @@ public class TouchInjectorService extends AccessibilityService {
         if (!result) {
             Log.e(TAG, "Failed to dispatch touch gesture");
             if (eventListener != null) {
-                eventListener.onTouchInjected(timestamp, action, scaledX, scaledY, false);
+                eventListener.onTouchInjected(timestamp, action, finalScaledX, finalScaledY, false);
             }
         }
 
         return result;
     }
 
-    private long getGestureDuration(int action) {
-        switch (action) {
-            case MotionEventAction.ACTION_DOWN:
-                return 50;
-            case MotionEventAction.ACTION_MOVE:
-                return 16;
-            case MotionEventAction.ACTION_UP:
-                return 100;
-            default:
-                return 50;
+    /**
+     * 静态方法：从外部调用触摸注入
+     */
+    public static boolean injectTouch(long timestamp, int action, float x, float y, float scaleX, float scaleY) {
+        if (instance == null) {
+            Log.w(TAG, "TouchInjectorService not running");
+            return false;
         }
+        return instance.injectTouchEvent(timestamp, action, x, y, scaleX, scaleY);
     }
 
     /**
      * 注入点击
      */
     public boolean injectClick(float x, float y, float scaleX, float scaleY) {
-        boolean down = injectTouchEvent(System.currentTimeMillis(), MotionEventAction.ACTION_DOWN, x, y, scaleX, scaleY);
+        boolean down = injectTouchEvent(System.currentTimeMillis(), MotionEvent.ACTION_DOWN, x, y, scaleX, scaleY);
         if (down) {
             try {
                 Thread.sleep(50);
@@ -165,15 +156,14 @@ public class TouchInjectorService extends AccessibilityService {
                 Thread.currentThread().interrupt();
             }
         }
-        return injectTouchEvent(System.currentTimeMillis(), MotionEventAction.ACTION_UP, x, y, scaleX, scaleY);
+        return injectTouchEvent(System.currentTimeMillis(), MotionEvent.ACTION_UP, x, y, scaleX, scaleY);
     }
 
     /**
      * 注入滑动
      */
     public boolean injectSwipe(float x1, float y1, float x2, float y2, float scaleX, float scaleY) {
-        // 简化：注入两个点
-        boolean down = injectTouchEvent(System.currentTimeMillis(), MotionEventAction.ACTION_DOWN, x1, y1, scaleX, scaleY);
+        boolean down = injectTouchEvent(System.currentTimeMillis(), MotionEvent.ACTION_DOWN, x1, y1, scaleX, scaleY);
         if (!down) return false;
 
         try {
@@ -182,7 +172,20 @@ public class TouchInjectorService extends AccessibilityService {
             Thread.currentThread().interrupt();
         }
 
-        return injectTouchEvent(System.currentTimeMillis(), MotionEventAction.ACTION_UP, x2, y2, scaleX, scaleY);
+        return injectTouchEvent(System.currentTimeMillis(), MotionEvent.ACTION_UP, x2, y2, scaleX, scaleY);
+    }
+
+    private long getGestureDuration(int action) {
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                return 50;
+            case MotionEvent.ACTION_MOVE:
+                return 16;
+            case MotionEvent.ACTION_UP:
+                return 100;
+            default:
+                return 50;
+        }
     }
 
     @Override
@@ -196,13 +199,5 @@ public class TouchInjectorService extends AccessibilityService {
         if (eventListener != null) {
             eventListener.onError(0, "AccessibilityService interrupted");
         }
-    }
-
-    // MotionEvent action 常量（避免引用完整的 MotionEvent）
-    public static class MotionEventAction {
-        public static final int ACTION_DOWN = 0;
-        public static final int ACTION_UP = 1;
-        public static final int ACTION_MOVE = 2;
-        public static final int ACTION_CANCEL = 3;
     }
 }

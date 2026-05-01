@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="resolution_entries">
+        <item>1280x720</item>
+        <item>1920x1080</item>
+        <item>2560x1440</item>
+        <item>3840x2160</item>
+    </string-array>
+    <string-array name="resolution_values">
+        <item>1280x720</item>
+        <item>1920x1080</item>
+        <item>2560x1440</item>
+        <item>3840x2160</item>
+    </string-array>
+
+    <string-array name="fps_entries">
+        <item>30 FPS</item>
+        <item>60 FPS</item>
+        <item>90 FPS</item>
+    </string-array>
+    <string-array name="fps_values">
+        <item>30</item>
+        <item>60</item>
+        <item>90</item>
+    </string-array>
+
+    <string-array name="bitrate_entries">
+        <item>4 Mbps</item>
+        <item>8 Mbps</item>
+        <item>16 Mbps</item>
+        <item>32 Mbps</item>
+    </string-array>
+    <string-array name="bitrate_values">
+        <item>4000000</item>
+        <item>8000000</item>
+        <item>16000000</item>
+        <item>32000000</item>
+    </string-array>
+
+    <string-array name="codec_entries">
+        <item>H.264 (硬件)</item>
+        <item>H.265 (硬件)</item>
+        <item>VP8 (软件)</item>
+        <item>VP9 (软件)</item>
+    </string-array>
+    <string-array name="codec_values">
+        <item>h264</item>
+        <item>h265</item>
+        <item>vp8</item>
+        <item>vp9</item>
+    </string-array>
+</resources>
