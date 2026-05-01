@@ -11,15 +11,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 音频解码器（AudioDecoder）
+ * 音频编码器（AudioEncoder）
  *
- * 使用 MediaCodec 解码 AAC → PCM
- * 输入：编码后的 AAC 数据
- * 输出：解码后的 PCM 数据 → AudioPlayer 播放
+ * 使用 MediaCodec 编码 PCM → AAC
+ * 输入：AudioCapture 采集的 PCM 数据
+ * 输出：编码后的 AAC 数据 → RTP 打包发送
  */
-public class AudioDecoder {
+public class AudioEncoder {
 
-    private static final String TAG = "AudioDecoder";
+    private static final String TAG = "AudioEncoder";
 
     // AAC 采样率
     private static final int SAMPLE_RATE = 48000;
@@ -27,13 +27,16 @@ public class AudioDecoder {
     // AAC 通道数
     private static final int CHANNEL_COUNT = 1;
 
+    // AAC 比特率
+    private static final int BIT_RATE = 128000;
+
     // AAC 格式
     private static final String MIME_TYPE = "audio/mp4a-latm";
 
     private final Context context;
 
-    private MediaCodec decoderCodec;
-    private Thread decoderThread;
+    private MediaCodec encoderCodec;
+    private Thread encoderThread;
     private AtomicBoolean isRunning = new AtomicBoolean(false);
 
     private BlockingQueue<byte[]> inputQueue = new LinkedBlockingQueue<>(50);
@@ -42,11 +45,11 @@ public class AudioDecoder {
     private EventListener eventListener;
 
     public interface EventListener {
-        void onPcmData(byte[] pcmData, int size, long timestamp);
+        void onEncodedData(byte[] aacData, int size, long timestamp);
         void onError(int errorCode, String message);
     }
 
-    public AudioDecoder(Context context) {
+    public AudioEncoder(Context context) {
         this.context = context;
     }
 
@@ -55,21 +58,21 @@ public class AudioDecoder {
     }
 
     /**
-     * 获取输入队列（用于喂入 AAC 数据）
+     * 获取输入队列（用于喂入 PCM 数据）
      */
     public BlockingQueue<byte[]> getInputQueue() {
         return inputQueue;
     }
 
     /**
-     * 获取输出队列（用于取出解码后的 PCM 数据）
+     * 获取输出队列（用于取出编码后的 AAC 数据）
      */
     public BlockingQueue<byte[]> getOutputQueue() {
         return outputQueue;
     }
 
     /**
-     * 启动解码器
+     * 启动编码器
      */
     public synchronized void start() {
         if (isRunning.get()) {
@@ -77,79 +80,80 @@ public class AudioDecoder {
         }
 
         try {
-            // 创建 MediaFormat（这里使用 AAC 格式）
+            // 创建 MediaFormat
             MediaFormat format = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, CHANNEL_COUNT);
-            // 可以设置解码器特定参数
+            format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+            format.setInteger(MediaFormat.KEY_AAC_PROFILE, 2); // AAC-LC
 
-            // 创建解码器
-            decoderCodec = MediaCodec.createDecoderByType(MIME_TYPE);
-            decoderCodec.configure(format, null, null, 0);
-            decoderCodec.start();
+            // 创建编码器
+            encoderCodec = MediaCodec.createEncoderByType(MIME_TYPE);
+            encoderCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            encoderCodec.start();
 
             isRunning.set(true);
 
-            // 启动解码线程
-            decoderThread = new Thread(this::decodeLoop, "AudioDecoderThread");
-            decoderThread.start();
+            // 启动编码线程
+            encoderThread = new Thread(this::encodeLoop, "AudioEncoderThread");
+            encoderThread.start();
 
-            Log.i(TAG, "AudioDecoder started");
+            Log.i(TAG, "AudioEncoder started");
 
         } catch (Exception e) {
-            Log.e(TAG, "Failed to start AudioDecoder", e);
+            Log.e(TAG, "Failed to start AudioEncoder", e);
             if (eventListener != null) {
                 eventListener.onError(-1, "Failed to start: " + e.getMessage());
             }
         }
     }
 
-    private void decodeLoop() {
+    private void encodeLoop() {
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-        ByteBuffer[] inputBuffers = decoderCodec.getInputBuffers();
-        ByteBuffer[] outputBuffers = decoderCodec.getOutputBuffers();
+        ByteBuffer[] inputBuffers = encoderCodec.getInputBuffers();
+        ByteBuffer[] outputBuffers = encoderCodec.getOutputBuffers();
 
         while (isRunning.get()) {
             try {
-                // 入队
-                int inputIndex = decoderCodec.dequeueInputBuffer(10000);
+                // 填充输入
+                int inputIndex = encoderCodec.dequeueInputBuffer(10000);
                 if (inputIndex >= 0) {
                     ByteBuffer inputBuffer = inputBuffers[inputIndex];
                     inputBuffer.clear();
 
-                    byte[] aacData = inputQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS);
-                    if (aacData != null) {
-                        int size = Math.min(aacData.length, inputBuffer.remaining());
-                        inputBuffer.put(aacData, 0, size);
-                        decoderCodec.queueInputBuffer(inputIndex, 0, size, 0, 0);
+                    byte[] pcmData = inputQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS);
+                    if (pcmData != null) {
+                        int size = Math.min(pcmData.length, inputBuffer.remaining());
+                        inputBuffer.put(pcmData, 0, size);
+                        encoderCodec.queueInputBuffer(inputIndex, 0, size, 0, 0);
                     } else {
                         // 无数据，填充静音
-                        decoderCodec.queueInputBuffer(inputIndex, 0, 0, 0, 0);
+                        encoderCodec.queueInputBuffer(inputIndex, 0, 0, 0, 0);
                     }
                 }
 
-                // 出队
-                int outputIndex = decoderCodec.dequeueOutputBuffer(info, 10000);
+                // 消费输出
+                int outputIndex = encoderCodec.dequeueOutputBuffer(info, 10000);
                 if (outputIndex >= 0) {
-                    ByteBuffer outputBuffer = decoderCodec.getOutputBuffer(outputIndex);
+                    ByteBuffer outputBuffer = encoderCodec.getOutputBuffer(outputIndex);
 
                     if (outputBuffer != null && info.size > 0) {
-                        byte[] pcmData = new byte[info.size];
-                        outputBuffer.get(pcmData, 0, info.size);
+                        byte[] aacData = new byte[info.size];
+                        outputBuffer.get(aacData, 0, info.size);
 
                         // 加入输出队列
-                        if (!outputQueue.offer(pcmData)) {
+                        if (!outputQueue.offer(aacData)) {
                             outputQueue.poll();
-                            outputQueue.offer(pcmData);
+                            outputQueue.offer(aacData);
                         }
 
                         if (eventListener != null) {
-                            eventListener.onPcmData(pcmData, info.size, info.presentationTimeUs);
+                            eventListener.onEncodedData(aacData, info.size, info.presentationTimeUs);
                         }
                     }
 
-                    decoderCodec.releaseOutputBuffer(outputIndex, false);
+                    encoderCodec.releaseOutputBuffer(outputIndex, false);
 
                 } else if (outputIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-                    outputBuffers = decoderCodec.getOutputBuffers();
+                    outputBuffers = encoderCodec.getOutputBuffers();
                 }
 
             } catch (Exception e) {
@@ -161,34 +165,34 @@ public class AudioDecoder {
     }
 
     /**
-     * 停止解码器
+     * 停止编码器
      */
     public synchronized void stop() {
         isRunning.set(false);
 
-        if (decoderThread != null) {
+        if (encoderThread != null) {
             try {
-                decoderThread.join(1000);
+                encoderThread.join(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            decoderThread = null;
+            encoderThread = null;
         }
 
-        if (decoderCodec != null) {
+        if (encoderCodec != null) {
             try {
-                decoderCodec.stop();
-                decoderCodec.release();
+                encoderCodec.stop();
+                encoderCodec.release();
             } catch (Exception e) {
                 // ignore
             }
-            decoderCodec = null;
+            encoderCodec = null;
         }
 
         inputQueue.clear();
         outputQueue.clear();
 
-        Log.i(TAG, "AudioDecoder stopped");
+        Log.i(TAG, "AudioEncoder stopped");
     }
 
     /**
