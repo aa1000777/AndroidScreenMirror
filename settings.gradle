@@ -1,2 +1,7 @@
-// 项目设置文件，定义包含的模块
-include ':app'
+// 项目设置 - 多模块配置
+include ':screenshare-sdk'
+include ':screenshare-app'
+include ':app'  // 保留旧模块，方便过渡
+
+// 设置默认项目
+rootProject.name = 'screenshare'

@@ -1,13 +1,12 @@
-// 项目根目录的build.gradle文件
-// 用于配置整个项目的构建脚本
+// 根项目构建配置
 buildscript {
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        // 使用Android Gradle插件版本8.0.0
-        classpath 'com.android.tools.build:gradle:8.0.0'
+        // Android Gradle Plugin 8.2.0（推荐稳定版，配合 Gradle 8.5）
+        classpath 'com.android.tools.build:gradle:8.2.0'
     }
 }
 
@@ -18,7 +17,7 @@ allprojects {
     }
 }
 
-// 清理任务
+// 全局任务
 task clean(type: Delete) {
-    delete rootProject.buildDir
+    delete rootProject.layout.buildDirectory
 }
