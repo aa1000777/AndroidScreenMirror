@@ -1,149 +1,347 @@
-# Android屏幕镜像项目
+# Android 超低延时投屏 SDK
+
+> 📱 < 50ms 端到端视频延迟 | WiFi P2P 直连 | SDK + App 双模块架构
+
+---
 
 ## 项目概述
-这是一个完整的Android工程，实现手机投屏到Pad功能。支持两种连接方式：WiFi P2P（点对点直连）和局域网TCP/UDP。
 
-## 功能特性
-1. **屏幕采集**：使用MediaProjection API捕获屏幕内容
-2. **视频编码**：使用MediaCodec进行H.264硬编码
-3. **网络传输**：支持TCP和UDP协议传输视频流
-4. **解码渲染**：接收端解码并显示视频流
-5. **触摸反控**：Pad端触摸控制手机端操作
-6. **双连接模式**：WiFi P2P直连和局域网连接
+Android 超低延时投屏 SDK，旨在实现手机到 Pad 的实时投屏和触摸反控功能。目标延迟：视频 <50ms，触摸 <10ms。
+
+### 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| **超低延迟** | 视频 <50ms，触摸 <10ms |
+| **WiFi P2P** | 点对点直连，无需路由器 |
+| **硬件编码** | MediaCodec H.264/H.265 |
+| **触摸反控** | AccessibilityService 注入 |
+| **SDK 模块化** | screenshare-sdk（AAR）+ screenshare-app |
+| **GC 优化** | 原子化预分配缓冲区 |
+
+---
 
 ## 项目结构
+
 ```
 AndroidScreenMirror/
-├── app/
-│   ├── src/main/
-│   │   ├── java/com/example/screenmirror/
-│   │   │   ├── MainActivity.java          # 主界面，选择设备角色
-│   │   │   ├── SenderActivity.java        # 发送端Activity
-│   │   │   ├── ReceiverActivity.java      # 接收端Activity
-│   │   │   ├── ScreenCaptureService.java  # 屏幕录制服务
-│   │   │   ├── WifiP2pService.java        # WiFi P2P服务
-│   │   │   └── NetworkService.java        # 网络传输服务
-│   │   ├── res/
-│   │   │   ├── layout/                    # 布局文件
-│   │   │   ├── values/                    # 资源文件
-│   │   │   └── drawable/                  # 图像资源
-│   │   └── AndroidManifest.xml            # 应用清单
-│   └── build.gradle                       # 模块构建配置
-├── build.gradle                           # 项目构建配置
-├── settings.gradle                        # 项目设置
-└── README.md                              # 项目说明
+├── screenshare-sdk/                      # SDK 模块（AAR 发布）
+│   ├── build.gradle
+│   └── src/main/
+│       ├── java/com/screenshare/sdk/
+│       │   ├── ScreenshareSDK.java      # SDK 唯一入口
+│       │   ├── Sender.java              # 发送端
+│       │   ├── Receiver.java            # 接收端
+│       │   ├── SenderConfig.java        # 发送端配置
+│       │   ├── ReceiverConfig.java      # 接收端配置
+│       │   ├── Common/
+│       │   │   ├── AtomicBuffer.java    # GC 优化缓冲区
+│       │   │   ├── BandwidthAdapter.java # 带宽自适应
+│       │   │   ├── ConnectionStateMachine.java
+│       │   │   ├── ErrorCode.java       # 错误码
+│       │   │   ├── HeartbeatMonitor.java
+│       │   │   ├── LatencyTester.java
+│       │   │   ├── ReconnectionManager.java
+│       │   │   ├── SenderState.java
+│       │   │   └── ReceiverState.java
+│       │   ├── capture/
+│       │   │   └── ScreenCapturer.java
+│       │   ├── codec/
+│       │   │   ├── VideoEncoder.java
+│       │   │   ├── VideoDecoder.java
+│       │   │   ├── VideoDecoderIntegrator.java
+│       │   │   ├── AudioCapture.java
+│       │   │   ├── AudioEncoder.java
+│       │   │   ├── AudioDecoder.java
+│       │   │   └── AudioPlayer.java
+│       │   ├── network/
+│       │   │   ├── UdpChannel.java
+│       │   │   └── RtpSession.java
+│       │   ├── service/
+│       │   │   ├── ScreenCaptureService.java
+│       │   │   └── ScreenMirroringService.java
+│       │   ├── touch/
+│       │   │   ├── TouchEncoder.java
+│       │   │   ├── TouchDecoder.java
+│       │   │   └── TouchInjectorService.java
+│       │   └── wifi/
+│       │       ├── P2pConnectionManager.java
+│       │       ├── P2pBroadcastReceiver.java
+│       │       └── ServiceDiscovery.java
+│       ├── res/
+│       └── AndroidManifest.xml
+│
+├── screenshare-app/                      # App 模块
+│   ├── build.gradle
+│   └── src/main/
+│       ├── java/com/screenshare/app/
+│       │   ├── ui/
+│       │   │   ├── MainActivity.java
+│       │   │   ├── SenderActivity.java
+│       │   │   ├── ReceiverActivity.java
+│       │   │   ├── SettingsActivity.java
+│       │   │   └── dialog/ErrorRecoveryDialog.java
+│       └── res/
+│
+├── build.gradle                          # 根项目配置（AGP 8.2.0）
+├── settings.gradle                      # 模块包含
+├── gradle.properties                     # Gradle 配置
+├── gradlew / gradlew.bat               # Gradle Wrapper（8.5）
+└── README.md
 ```
 
-## 编译和运行说明
+---
 
-### 环境要求
-- Android Studio 2022.3.1 或更高版本
-- Android SDK 33 或更高版本
-- Java 8 或更高版本
-- 两台Android设备（一台作为发送端，一台作为接收端）
-  - 发送端：Android 5.0 (API 21) 或更高版本
-  - 接收端：Android 5.0 (API 21) 或更高版本
+## SDK API 概览
 
-### 编译步骤
-1. **导入项目**
-   - 打开Android Studio
-   - 选择"Open"或"Import Project"
-   - 导航到`AndroidScreenMirror`目录并打开
+### 入口类
 
-2. **配置SDK**
-   - 确保已安装Android SDK 33
-   - 确保已安装Build Tools 33.0.0或更高版本
+```java
+// ScreenshareSDK.java - SDK 唯一入口
+public class ScreenshareSDK {
+    // 创建发送端
+    public static Sender createSender(Context context, SenderConfig config);
+    
+    // 创建接收端
+    public static Receiver createReceiver(Context context, ReceiverConfig config);
+    
+    // 版本信息
+    public static String getVersion();     // "1.0.0"
+    public static int getVersionCode();     // 100
+}
+```
 
-3. **构建项目**
-   - 点击菜单栏的"Build" → "Make Project"
-   - 或使用快捷键Ctrl+F9 (Windows/Linux) / Cmd+F9 (Mac)
+### 发送端 API
 
-4. **安装到设备**
-   - 连接Android设备并启用USB调试
-   - 点击"Run" → "Run 'app'"
-   - 选择目标设备并点击"OK"
+```java
+public class Sender {
+    // 生命周期
+    public void startCapture();          // 开始屏幕采集
+    public void stopCapture();           // 停止采集
+    public void release();               // 释放资源
+    
+    // 连接管理
+    public void connect(String peerAddress);  // 连接到对等设备
+    public void disconnect();            // 断开连接
+    
+    // 触摸发送
+    public void sendTouchEvent(long timestamp, int action, float x, float y);
+    
+    // 事件监听
+    public void setEventListener(EventListener listener);
+}
 
-### 运行步骤
-1. **发送端设置（手机）**
-   - 安装应用后打开
-   - 点击"作为发送端（手机）"
-   - 选择连接方式：
-     - WiFi P2P：点对点直连，无需路由器
-     - TCP：稳定的局域网连接
-     - UDP：低延迟的局域网连接
-   - 点击"开始投屏"
-   - 授予屏幕录制权限
+public interface Sender.EventListener {
+    void onStateChanged(SenderState state);
+    void onError(int errorCode, String message);
+    void onConnected(String peerAddress);
+    void onDisconnected();
+    void onFrameSent(long timestamp, int size);
+}
+```
 
-2. **接收端设置（Pad）**
-   - 在另一台设备上安装应用
-   - 点击"作为接收端（Pad）"
-   - 点击"搜索设备"发现附近设备
-   - 从列表中选择发送端设备
-   - 点击"开始接收"
+### 接收端 API
 
-3. **触摸反控**
-   - 在接收端Pad上触摸屏幕
-   - 触摸事件将发送到发送端手机
-   - 手机将响应触摸操作
+```java
+public class Receiver {
+    public void startListening();        // 开始监听
+    public void stopListening();         // 停止监听
+    public void release();               // 释放资源
+    
+    public void setEventListener(EventListener listener);
+}
 
-### 调试说明
-1. **日志查看**
-   - 使用Android Studio的Logcat查看日志
-   - 过滤标签：SenderActivity、ReceiverActivity
+public interface Receiver.EventListener {
+    void onStateChanged(ReceiverState state);
+    void onError(int errorCode, String message);
+    void onFrameReceived(long timestamp, int size);
+    void onTouchEventReceived(long timestamp, int action, float x, float y);
+    void onConnected(String senderAddress);
+    void onDisconnected();
+}
+```
 
-2. **常见问题**
-   - **权限问题**：确保授予所有请求的权限
-   - **连接失败**：确保设备在同一网络或WiFi P2P范围内
-   - **视频卡顿**：调整编码比特率或降低帧率
+### 配置类
 
-3. **测试建议**
-   - 先在同一设备上测试基础功能
-   - 再使用两台设备进行实际投屏测试
-   - 测试不同网络环境下的表现
+```java
+// 发送端配置
+public class SenderConfig {
+    public int width = 1920;            // 视频宽度
+    public int height = 1080;           // 视频高度
+    public int fps = 60;                // 帧率
+    public int videoBitrate = 0;        // 码率（0=自动）
+    public int videoPort = 8888;        // 视频端口（UDP）
+    public int touchPort = 8889;        // 触摸端口（UDP）
+    public VideoCodecType videoCodec = VideoCodecType.H264_HARDWARE;
+    public PerformancePreset performancePreset = PerformancePreset.BALANCED;
+}
 
-## 技术实现细节
+// 接收端配置
+public class ReceiverConfig {
+    public int width = 1920;
+    public int height = 1080;
+    public int listenVideoPort = 8888;
+    public int listenTouchPort = 8889;
+    public boolean lowLatencyMode = true;
+    public VideoCodecType videoCodec = VideoCodecType.H264_HARDWARE;
+}
+```
 
-### 屏幕采集模块
-- 使用`MediaProjectionManager`请求屏幕录制权限
-- 创建`VirtualDisplay`捕获屏幕内容
-- 通过`Surface`将视频帧送入编码器
+---
 
-### 视频编码模块
-- 使用`MediaCodec`进行H.264硬编码
-- 配置编码参数：分辨率、比特率、帧率
-- 处理编码器回调，获取编码后的NAL单元
+## 状态机
 
-### 网络传输模块
-- **TCP模式**：可靠的面向连接传输，适合稳定网络
-- **UDP模式**：无连接的快速传输，适合低延迟场景
-- **WiFi P2P模式**：设备直连，无需中间网络
+### 发送端状态机
 
-### 解码渲染模块
-- 使用`MediaCodec`进行H.264硬解码
-- 通过`SurfaceView`显示解码后的视频帧
-- 处理解码器状态和格式变化
+```
+IDLE → CAPTURING → DISCOVERING → CONNECTING ↔ STREAMING
+                                    ↓
+                            CONNECTION_LOST（可重连）
+```
 
-### 触摸反控模块
-- 在接收端捕获触摸事件
-- 将触摸坐标归一化后发送到发送端
-- 发送端通过`Instrumentation`或无障碍服务模拟触摸
+### 接收端状态机
 
-## 注意事项
-1. **权限要求**：需要屏幕录制、网络、位置等敏感权限
-2. **设备兼容性**：某些设备可能对MediaProjection有特殊限制
-3. **性能考虑**：高分辨率屏幕录制可能消耗大量CPU和网络资源
-4. **安全考虑**：确保只在可信网络环境中使用
+```
+LISTENING → ACCEPTED → STREAMING
+```
 
-## 代码注释
-- 所有Java代码都有详细的中文注释
-- 注释内容包括：功能说明、参数解释、实现原理
-- 关键代码段有额外的实现细节说明
+---
 
-## 许可证
-本项目仅供学习和研究使用，请遵守相关法律法规。
+## 错误码体系
 
-## 更新日志
-- 2026-03-08：初始版本发布
-- 包含完整的屏幕镜像功能
-- 支持WiFi P2P和局域网连接
-- 实现触摸事件反控
+| 范围 | 类别 |
+|------|------|
+| 1xxx | 权限/配置错误 |
+| 2xxx | 屏幕采集错误 |
+| 3xxx | 编码/解码错误 |
+| 4xxx | 网络传输错误 |
+| 5xxx | WiFi P2P 错误 |
+
+---
+
+## 编译要求
+
+| 配置 | 版本 |
+|------|------|
+| AGP | 8.2.0 |
+| Gradle | 8.5 |
+| minSdk | 26（Android 8.0）|
+| targetSdk | 34 |
+| compileSdk | 34 |
+
+### 编译命令
+
+```bash
+# 编译 SDK
+./gradlew :screenshare-sdk:assembleDebug
+
+# 编译 App
+./gradlew :screenshare-app:assembleDebug
+
+# 同时编译
+./gradlew :screenshare-sdk:assembleDebug :screenshare-app:assembleDebug
+```
+
+---
+
+## 使用示例
+
+### 发送端
+
+```java
+// 1. 创建配置
+SenderConfig config = new SenderConfig();
+config.width = 1920;
+config.height = 1080;
+config.fps = 60;
+config.videoPort = 8888;
+config.touchPort = 8889;
+
+// 2. 创建发送端
+Sender sender = ScreenshareSDK.createSender(context, config);
+sender.setEventListener(new Sender.EventListener() {
+    @Override
+    public void onConnected(String peerAddress) {
+        Log.d(TAG, "已连接到: " + peerAddress);
+    }
+    
+    @Override
+    public void onDisconnected() {
+        Log.d(TAG, "连接断开");
+    }
+});
+
+// 3. 开始采集
+sender.startCapture();
+
+// 4. 连接到接收端
+sender.connect("192.168.x.x");
+
+// 5. 发送触摸事件
+sender.sendTouchEvent(System.currentTimeMillis(), ACTION_DOWN, 100, 200);
+
+// 6. 停止
+sender.stopCapture();
+sender.release();
+```
+
+### 接收端
+
+```java
+// 1. 创建配置
+ReceiverConfig config = new ReceiverConfig();
+config.listenVideoPort = 8888;
+config.listenTouchPort = 8889;
+
+// 2. 创建接收端
+Receiver receiver = ScreenshareSDK.createReceiver(context, config);
+receiver.setEventListener(new Receiver.EventListener() {
+    @Override
+    public void onTouchEventReceived(long timestamp, int action, float x, float y) {
+        // 注入触摸事件
+        TouchInjectorService.injectTouch(timestamp, action, x, y, 1f, 1f);
+    }
+});
+
+// 3. 开始监听
+receiver.startListening();
+
+// 4. 停止
+receiver.stopListening();
+receiver.release();
+```
+
+---
+
+## 技术指标
+
+| 指标 | 目标 |
+|------|------|
+| 视频延迟 | < 50ms |
+| 触摸延迟 | < 10ms |
+| 帧率 | 60fps |
+| 分辨率 | 最高 1920x1080 |
+| 编码 | H.264/H.265 硬件 |
+| 连接 | WiFi P2P / WiFi 局域网 |
+
+---
+
+## 文件统计
+
+| 模块 | 文件数 | 备注 |
+|------|--------|------|
+| SDK Java | 32 个 | 完整实现 |
+| App Java | 5 个 | UI + Dialog |
+| 布局 | 8 个 | Activity + Dialog |
+| 资源 | 多个 | strings/colors/arrays |
+
+---
+
+## GitHub
+
+- **仓库**: https://github.com/aa1000777/AndroidScreenMirror
+- **提交历史**: 每周迭代开发
+
+---
+
+*最后更新: 2026-05-01*
